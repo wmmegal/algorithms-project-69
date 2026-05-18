@@ -27,8 +27,6 @@ class SearchTest extends TestCase
     {
         $results = search($this->docs, 'shoot');
         $this->assertCount(2, $results);
-        $this->assertEquals('doc1', $results[0]);
-        $this->assertEquals('doc2', $results[1]);
     }
 
     public function testNotFound(): void
@@ -47,5 +45,14 @@ class SearchTest extends TestCase
     {
         $results = search($this->docs, 'pint!');
         $this->assertCount(1, $results);
+    }
+
+    public function testSearchRelevance(): void
+    {
+        $results = search($this->docs, 'shoot');
+
+        $this->assertCount(2, $results);
+        $this->assertEquals('doc2', $results[0]);
+        $this->assertEquals('doc1', $results[1]);
     }
 }
