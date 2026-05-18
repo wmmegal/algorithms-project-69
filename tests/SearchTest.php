@@ -42,4 +42,10 @@ class SearchTest extends TestCase
         $results = search([], 'shoot');
         $this->assertCount(0, $results);
     }
+
+    public function testSearchWithSpecialCharacters(): void
+    {
+        $results = search($this->docs, 'pint!');
+        $this->assertCount(1, $results);
+    }
 }

@@ -2,18 +2,29 @@
 
 namespace App;
 
-function search(array $docs, string $query): array
+function search(array $docs, string $searchQuery): array
 {
     if (empty($docs)) {
         return [];
     }
 
-    $results = [];
+    $preparedSearchQuery = prepareWords($searchQuery)[0] ?? '';
+    $results             = [];
+
     foreach ($docs as $doc) {
-        if (preg_match("/\b$query\b/i", $doc['text'])) {
+        $preparedDocs = prepareWords($doc['text']);
+
+        if (in_array($preparedSearchQuery, $preparedDocs)) {
             $results[] = $doc['id'];
         }
     }
 
     return $results;
+}
+
+function prepareWords(string $words): array
+{
+    preg_match_all('/\w+/', $words, $matches);
+
+    return collect($matches)->flatten()->toArray();
 }
