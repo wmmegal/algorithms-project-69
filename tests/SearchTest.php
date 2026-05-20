@@ -49,7 +49,7 @@ class SearchTest extends TestCase
 
     public function testSearchRelevance(): void
     {
-        $results = search($this->docs, 'shoot');
+        $results = search($this->docs, 'shoot at me');
 
         $this->assertCount(2, $results);
         $this->assertEquals('doc2', $results[0]);

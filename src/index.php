@@ -2,50 +2,53 @@
 
 namespace App;
 
-function search(array $docs, string $searchQuery): array
+function search(array $docs, string $search): array
 {
     if (empty($docs)) {
         return [];
     }
 
-    $preparedSearchQuery = prepareWords($searchQuery)[0] ?? '';
-    $results             = [];
+    $handledSearchText = handleText($search);
 
-    foreach ($docs as $doc) {
-        $preparedDocs = prepareWords($doc['text']);
+    return collect($docs)
+        ->map(function ($doc) use ($handledSearchText) {
+            $handledDocText = handleText($doc['text']);
+            $relevantWords  = relevantWords($handledDocText, $handledSearchText);
+            $doc['score']   = count($relevantWords);
+            $doc['score']   += inputsCount($handledDocText, $relevantWords);
 
-        if (in_array($preparedSearchQuery, $preparedDocs)) {
-            $results[] = $doc['id'];
-        }
-    }
-
-    usort($results, function ($a, $b) use ($docs, $preparedSearchQuery) {
-        $aWords = collect($docs)->where('id', $a)->first()['text'];
-        $bWords = collect($docs)->where('id', $b)->first()['text'];
-
-        return inputsCount($bWords, $preparedSearchQuery) <=> inputsCount($aWords, $preparedSearchQuery);
-    });
-
-    return $results;
+            print_r($doc);
+            return $doc;
+        })
+        ->filter(fn($doc) => $doc['score'] > 0)
+        ->sortByDesc(fn($doc) => $doc['score'])
+        ->pluck('id')
+        ->values()
+        ->toArray();
 }
 
-function prepareWords(string $words): array
+function handleText(string $words): array
 {
     preg_match_all('/\w+/', $words, $matches);
 
     return collect($matches)->flatten()->toArray();
 }
 
-function inputsCount(string $words, string $searchedWord): int
+function relevantWords(array $docText, array $searchText): array
 {
-    $count    = 0;
-    $wordsArr = prepareWords($words);
+    return collect($docText)
+        ->filter(fn($word) => in_array($word, $searchText))
+        ->toArray();
+}
 
-    foreach ($wordsArr as $word) {
-        if ($word === $searchedWord) {
-            $count++;
-        }
-    }
+function inputsCount(array $docText, array $searchText): int
+{
+    return (int) collect($docText)
+        ->reduce(function ($acc, $word) use ($searchText) {
+            if (in_array($word, $searchText)) {
+                $acc++;
+            }
 
-    return $count;
+            return $acc;
+        }, 0);
 }
