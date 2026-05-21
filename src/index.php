@@ -9,7 +9,25 @@ function search(array $docs, string $search): array
     }
 
     $handledSearchText = handleText($search);
+    $docIds = fuzzySearch($docs, $handledSearchText);
 
+    return (array) collect($handledSearchText)
+        ->reduce(function ($acc, $word) use ($docs, $docIds) {
+            foreach ($docIds as $docId) {
+                $docText = collect($docs)->where('id', $docId)->first()['text'];
+                $handledDocText = handleText($docText);
+
+                if (in_array($word, $handledDocText)) {
+                    $acc[$word][] = $docId;
+                }
+            }
+
+            return $acc;
+        }, []);
+}
+
+function fuzzySearch(array $docs, array $handledSearchText): array
+{
     return collect($docs)
         ->map(function ($doc) use ($handledSearchText) {
             $handledDocText = handleText($doc['text']);
@@ -17,7 +35,6 @@ function search(array $docs, string $search): array
             $doc['score']   = count($relevantWords);
             $doc['score']   += inputsCount($handledDocText, $relevantWords);
 
-            print_r($doc);
             return $doc;
         })
         ->filter(fn($doc) => $doc['score'] > 0)

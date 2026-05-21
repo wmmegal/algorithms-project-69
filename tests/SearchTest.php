@@ -26,7 +26,7 @@ class SearchTest extends TestCase
     public function testSearch(): void
     {
         $results = search($this->docs, 'shoot');
-        $this->assertCount(2, $results);
+        $this->assertCount(2, $results['shoot']);
     }
 
     public function testNotFound(): void
@@ -44,15 +44,16 @@ class SearchTest extends TestCase
     public function testSearchWithSpecialCharacters(): void
     {
         $results = search($this->docs, 'pint!');
-        $this->assertCount(1, $results);
+        $this->assertCount(1, $results['pint']);
     }
 
     public function testSearchRelevance(): void
     {
         $results = search($this->docs, 'shoot at me');
 
-        $this->assertCount(2, $results);
-        $this->assertEquals('doc2', $results[0]);
-        $this->assertEquals('doc1', $results[1]);
+        $this->assertCount(3, $results);
+        $this->assertEquals(['doc2', 'doc1'], $results['shoot']);
+        $this->assertEquals(['doc2'], $results['at']);
+        $this->assertEquals(['doc2'], $results['me']);
     }
 }
